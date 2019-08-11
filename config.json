@@ -1,0 +1,70 @@
+{
+  "log": {
+    "dir": "/tmp/abtest/",
+    "format": "200601/20060102.txt",
+    "prefix": "DEBUG "
+  },
+  "defaultOption": {
+    "port": 8081,
+    "sockFile": "/tmp/abtest/abtest.sock",
+    "paramNameVersion": "__abv",
+    "paramNameData": "__abd"
+  },
+  "defaultServer": {
+    "groupA":["192.168.0.10","192.168.0.11"],
+    "groupB":["114.113.88.123"]
+  },
+  "defaultSecret": [
+    "123abc",
+    "123abc"
+  ],
+  "rule": {
+    "test1.cp.com": {
+      "groupA": [
+        "192.168.0.10",
+        "192.168.0.11"
+      ],
+      "groupB": [
+        "192.168.0.20",
+        "192.168.0.21"
+      ],
+      "type": "crc32",
+      "secrets": [
+        "123456",
+        "987654"
+      ],
+      "uids": [
+        10010,
+        1557822591000,
+        100300000987000
+      ],
+      "versions": [
+        "v1",
+        "v2"
+      ]
+    },
+    "test2.cp.com": {
+      "host": "test2.cp.com",
+      "versions": [
+        "v3",
+        "v4"
+      ]
+    },
+    "weibo.com": {
+      "host": "weibo.com"
+    },
+    "localhost:8081": {
+      "groupA": [
+        "127.0.0.1:9091"
+      ],
+      "groupB": [
+        "127.0.0.1:9091"
+      ],
+      "host": "localhost:9091",
+      "versions": [
+        "1.1.2",
+        "v2"
+      ]
+    }
+  }
+}

@@ -14,6 +14,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -35,9 +36,19 @@ var (
 	paramNameData    = "__abd"
 	sockFile         = "/tmp/abtest.sock"
 	uuid             *ZdUUID
+	bufferSize       = 1024 * 32
 )
 
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		return make([]byte, bufferSize)
+	},
+}
+
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe(":10000", nil))
+	}()
 	flag.Parse()
 	conf = NewConfig(*config_file).Parse()
 	mylogger = NewLogger(conf.GetLogDir(), conf.GetLogFormat(), conf.GetLogPrefix())
@@ -146,8 +157,8 @@ func start() {
 		ReadTimeout:  time.Second * 5,
 		WriteTimeout: time.Second * 60,
 		IdleTimeout:  time.Second * 300,
-		//Handler:      mux,
-		Handler: http.TimeoutHandler(mux, time.Second*60, "TimeOut"),
+		Handler:      mux,
+		// Handler: http.TimeoutHandler(mux, time.Second*60, "TimeOut"),
 	}
 
 	var err error
@@ -216,10 +227,11 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	req, err := http.NewRequest(r.Method, tmp_url, r.Body)
 
 	if err != nil {
+		errStr := tmp_uuid + " backend server error1"
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("backend server error1"))
+		w.Write([]byte(errStr))
 		ret, _ := json.Marshal(r.Header)
-		mylogger.Println(ret, "backend server error1")
+		mylogger.Println(ret, errStr)
 		return
 	}
 
@@ -237,9 +249,10 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	resp, err := client.Do(req)
 
 	if err != nil {
+		errStr := tmp_uuid + " backend server error2"
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("backend server error2"))
-		mylogger.Println(err, "backend server error2")
+		w.Write([]byte(errStr))
+		mylogger.Println(err, errStr)
 		return
 	}
 
@@ -254,9 +267,11 @@ func proxy(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("AB-REQUEST-ID", tmp_uuid)
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
+	// buffer := getBuffer()
+	// defer putBuffer(buffer)
+	// io.CopyBuffer(w, resp.Body, buffer)
 	resp.Body.Close()
 	r.Body.Close()
-
 }
 
 func writeLog(r *http.Request, url string) {
@@ -394,4 +409,15 @@ func __getIp(host, abv, __abd string) string {
 	}
 
 	return IP_defaultA
+}
+
+func getBuffer() []byte {
+	if bf, ok := bufferPool.Get().([]byte); ok {
+		return bf
+	}
+	return make([]byte, bufferSize)
+}
+
+func putBuffer(bt []byte) {
+	bufferPool.Put(bt)
 }

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto/md5"
 	"fmt"
+	"hash"
 	"io"
 	"math"
 	"math/rand"
@@ -10,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -135,12 +138,18 @@ func GetMacAddrs() (string, error) {
 }
 
 type ZdUUID struct {
+	base_hash hash.Hash
+	buffer    bytes.Buffer
+	mutex     sync.Mutex
 	rand_part map[string]interface{} //动态随机因子
 	base_part string                 //固定随机因子
 }
 
 func NewUUID() *ZdUUID {
 	obj := &ZdUUID{
+		base_hash: md5.New(),
+		buffer:    bytes.Buffer{},
+		mutex:     sync.Mutex{},
 		rand_part: make(map[string]interface{}),
 	}
 
@@ -169,16 +178,31 @@ func (this *ZdUUID) setConfig(base_part string, rand_part map[string]interface{}
 	this.rand_part = rand_part
 }
 
+//go tool pprof -http=:8000 http://localhost:10000/debug/pprof/heap
 func (this *ZdUUID) createUUID() string {
+	this.mutex.Lock()
+	this.buffer.Reset()
+	this.buffer.WriteString(this.base_part)
 	for _, v := range this.rand_part {
-		this.base_part += fmt.Sprintf("%v", v.(func() interface{})())
+		this.buffer.WriteString(fmt.Sprintf("%v", v.(func() interface{})()))
 	}
-	h := md5.New()
-	io.WriteString(h, this.base_part)
-	hashstr := fmt.Sprintf("%X", h.Sum(nil))
+	this.base_hash.Reset()
+	io.WriteString(this.base_hash, this.buffer.String())
+	hashstr := fmt.Sprintf("%X", this.base_hash.Sum(nil))
 	tmp := make([]string, 0, 7)
 	for i := 0; i < 4; i++ {
 		tmp = append(tmp, hashstr[i*8:i*8+8])
 	}
+	this.mutex.Unlock()
 	return strings.Join(tmp, "-")
+	// this.buffer.Reset()
+	// this.buffer.WriteString(hashstr[0:8])
+	// this.buffer.WriteByte('-')
+	// this.buffer.WriteString(hashstr[8:16])
+	// this.buffer.WriteByte('-')
+	// this.buffer.WriteString(hashstr[16:24])
+	// this.buffer.WriteByte('-')
+	// this.buffer.WriteString(hashstr[24:32])
+	// this.mutex.Unlock()
+	// return this.buffer.String()
 }

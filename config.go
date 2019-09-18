@@ -62,54 +62,47 @@ func (this *Config) Parse() *Config {
 	if this.Rule != nil {
 		for k, v := range this.Rule {
 			tmp := &ConfigRuleOK{}
+			tmp.Version = NewSet()
 			if v.Version != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.Version {
-					tmp_1.Add(v1)
+					tmp.Version.Add(v1)
 				}
-				tmp.Version = tmp_1
 			}
+			tmp.Uid = NewSet()
 			if v.Uid != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.Uid {
-					tmp_1.Add(v1)
+					tmp.Uid.Add(v1)
 				}
-				tmp.Uid = tmp_1
 			}
+			tmp.Telphone = NewSet()
 			if v.Telphone != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.Telphone {
-					tmp_1.Add(v1)
+					tmp.Telphone.Add(v1)
 				}
-				tmp.Telphone = tmp_1
 			}
+			tmp.City = NewSet()
 			if v.City != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.City {
-					tmp_1.Add(v1)
+					tmp.City.Add(v1)
 				}
-				tmp.City = tmp_1
 			}
+			tmp.Field1 = NewSet()
 			if v.Field1 != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.Field1 {
-					tmp_1.Add(v1)
+					tmp.Field1.Add(v1)
 				}
-				tmp.Field1 = tmp_1
 			}
+			tmp.Field2 = NewSet()
 			if v.Field2 != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.Field2 {
-					tmp_1.Add(v1)
+					tmp.Field2.Add(v1)
 				}
-				tmp.Field2 = tmp_1
 			}
+			tmp.Field3 = NewSet()
 			if v.Field3 != nil {
-				tmp_1 := NewSet()
 				for _, v1 := range v.Field3 {
-					tmp_1.Add(v1)
+					tmp.Field3.Add(v1)
 				}
-				tmp.Field3 = tmp_1
 			}
 			this.RuleOK[k] = tmp
 		}

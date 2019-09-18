@@ -46,9 +46,6 @@ var bufferPool = sync.Pool{
 }
 
 func main() {
-	go func() {
-		log.Println(http.ListenAndServe(":10000", nil))
-	}()
 	flag.Parse()
 	conf = NewConfig(*config_file).Parse()
 	mylogger = NewLogger(conf.GetLogDir(), conf.GetLogFormat(), conf.GetLogPrefix())
@@ -187,6 +184,9 @@ func start() {
 	ioutil.WriteFile(sockFile, []byte(strconv.Itoa(os.Getpid())), os.ModeAppend)
 
 	log.Printf("Starting httpServer pid:%d, port:%d\n", os.Getpid(), port)
+	go func() {
+		log.Println(http.ListenAndServe(":10000", nil))
+	}()
 	handleSignal()
 	log.Println("Server exited")
 }
